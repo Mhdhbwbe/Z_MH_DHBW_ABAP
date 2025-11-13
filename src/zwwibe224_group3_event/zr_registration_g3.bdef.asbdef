@@ -1,0 +1,26 @@
+managed implementation in class zbp_r_registration_g3 unique;
+strict(2);
+
+define behavior for ZR_Registration_G3 alias Registration
+persistent table zregistrationa
+lock master
+authorization master( instance )
+{
+  create;
+  update;
+  delete;
+
+  field (readonly) RegistrationUuid;
+  field (readonly) RegistrationId;
+
+  determination assign_registration_id on modify { create; }
+  determination set_default_status on modify { create; }
+
+  validation check_max_participants on save { create; update; }
+  validation validate_participant on save { create; update; }
+  validation validate_event on save { create; update; }
+
+  action approve_registration result [1] $self;
+  action reject_registration  result [1] $self;
+
+}

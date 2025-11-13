@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZSMG_EVENT</ARBGB>
+    <MASTERLANG>E</MASTERLANG>
+    <STEXT>ZSMG_EVENT</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSMG_EVENT</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>Start date cannot be in the past</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSMG_EVENT</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>End date before start date</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSMG_EVENT</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>Maximum participants exceeded</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSMG_EVENT</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>Event opened successfully</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSMG_EVENT</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>Event closed successfully</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSMG_EVENT</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>Registration already processed</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSMG_EVENT</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>Registration approved</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZSMG_EVENT</ARBGB>
+     <MSGNR>008</MSGNR>
+     <TEXT>Registration rejected</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>

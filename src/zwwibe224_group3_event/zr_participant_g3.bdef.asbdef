@@ -1,0 +1,17 @@
+managed implementation in class zbp_r_participant_g3 unique;
+strict(2);
+
+define behavior for ZR_Participant_G3 alias Participant
+persistent table zparticipanta
+lock master
+authorization master( instance )
+{
+  create;
+  update;
+  delete;
+
+  field (readonly) ParticipantUuid;
+  field (readonly) ParticipantId;
+
+  determination assign_participant_id on modify { create; }
+}

@@ -1,0 +1,24 @@
+managed implementation in class zbp_r_event_g3 unique;
+strict(2);
+
+define behavior for ZR_Event_G3 alias Event
+implementation in class zbp_r_event_g3 unique
+persistent table zeventa
+lock master
+authorization master( instance )
+{
+  create;
+  update;
+  delete;
+
+  field (readonly) EventId;
+
+  determination assign_event_id on modify { create; }
+  determination set_default_status on modify { create; }
+
+  validation check_start_date on save { create; update; }
+  validation check_end_date on save { create; update; }
+
+  action open_event result [1] $self;
+  action close_event result [1] $self;
+}
