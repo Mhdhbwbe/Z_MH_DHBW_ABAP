@@ -1,12 +1,4 @@
-class ZBP_R_REGISTRATION_G3 definition
-  public
-  abstract
-  final
-  create public .
-
-public section.
-protected section.
-private section.
+CLASS zbp_r_registration_g3 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zr_registration_g3.
 ENDCLASS.
 
 

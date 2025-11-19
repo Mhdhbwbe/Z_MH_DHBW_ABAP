@@ -10,8 +10,15 @@ authorization master( instance )
   update;
   delete;
 
+  // Administrative Felder sind read-only
   field (readonly) ParticipantUuid;
   field (readonly) ParticipantId;
+  field (readonly) CreatedBy;
+  field (readonly) CreatedAt;
+  field (readonly) LastChangedBy;
+  field (readonly) LastChangedAt;
 
+  // Bestimmung für automatische ParticipantId-Vergabe
   determination assign_participant_id on modify { create; }
+
 }

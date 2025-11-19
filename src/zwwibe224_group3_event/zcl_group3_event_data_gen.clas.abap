@@ -12,7 +12,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_group3_event_data_gen IMPLEMENTATION.
+CLASS ZCL_GROUP3_EVENT_DATA_GEN IMPLEMENTATION.
 
 
   METHOD if_oo_adt_classrun~main.

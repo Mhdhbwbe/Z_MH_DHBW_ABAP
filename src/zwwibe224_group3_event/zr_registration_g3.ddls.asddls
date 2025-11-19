@@ -1,6 +1,3 @@
-//@AbapCatalog.sqlViewName: 'ZREGISTRATION_G3'
-//@AbapCatalog.compiler.compareFilter: true
-//@AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'ZR_REGISTRATION_G3'
 @Metadata.ignorePropagatedAnnotations: true
