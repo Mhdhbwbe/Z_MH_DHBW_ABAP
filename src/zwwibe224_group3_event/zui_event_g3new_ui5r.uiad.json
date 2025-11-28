@@ -1,0 +1,34 @@
+{
+  "formatVersion": "2",
+  "header": {
+    "description": "Event Management App (Group 3)",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "appType": "ui5",
+    "catalogId": "SAP_TC_UI5_REPO_UIAD",
+    "targetMappingTitle": "Event Management"
+  },
+  "ui5AppDetails": {
+    "appId": "zcommu_event_g3new"
+  },
+  "navigation": {
+    "targetMappingId": "UI5R_772D8FFF8605C31EEED0A32FE898D2D39F16E4E9_TM",
+    "semanticObject": "Event",
+    "action": "manage",
+    "desktop": true,
+    "tablet": true,
+    "phone": true
+  },
+  "tiles": [
+    {
+      "id": "UI5R_772D8FFF8605C31EEED0A32FE898D2D39F16E4E9_AL",
+      "tileType": "static",
+      "isDefault": true,
+      "standard": {
+        "title": "Event Management"
+      }
+    }
+  ]
+}

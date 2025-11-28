@@ -2,23 +2,22 @@ managed implementation in class zbp_r_participant_g3 unique;
 strict(2);
 
 define behavior for ZR_Participant_G3 alias Participant
-persistent table zparticipanta
-lock master
-authorization master( instance )
+  persistent table zparticipanta
+  lock master
+  authorization master( instance )
+  etag master LastChangedAt
 {
   create;
   update;
   delete;
 
-  // Administrative Felder sind read-only
-  field (readonly) ParticipantUuid;
+  field (readonly, numbering: managed) ParticipantUuid;
   field (readonly) ParticipantId;
-  field (readonly) CreatedBy;
-  field (readonly) CreatedAt;
-  field (readonly) LastChangedBy;
-  field (readonly) LastChangedAt;
+  field (mandatory) FirstName;
+  field (mandatory) LastName;
+  field (mandatory) Email;
 
-  // Bestimmung für automatische ParticipantId-Vergabe
-  determination assign_participant_id on modify { create; }
+  action assign_participant_id;
 
+  validation validate_email on save { create; update; }
 }
