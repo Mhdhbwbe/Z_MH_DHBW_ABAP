@@ -1,5 +1,13 @@
-CLASS zbp_r_event_g3 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zr_event_g3.
+class ZBP_R_EVENT_G3 definition
+  public
+  create private .
+
+public section.
+protected section.
+private section.
 ENDCLASS.
 
-CLASS zbp_r_event_g3 IMPLEMENTATION.
+
+
+CLASS ZBP_R_EVENT_G3 IMPLEMENTATION.
 ENDCLASS.

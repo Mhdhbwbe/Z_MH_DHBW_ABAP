@@ -1,4 +1,10 @@
-CLASS zbp_r_participant_g3 DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zr_participant_g3.
+class ZBP_R_PARTICIPANT_G3 definition
+  public
+  create private .
+
+public section.
+protected section.
+private section.
 ENDCLASS.
 
 
