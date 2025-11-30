@@ -1,91 +1,99 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'ZR_Event_G3'
-//@Metadata.ignorePropagatedAnnotations: true
 
 @Search.searchable: true
 
 @UI.headerInfo: {
-typeName: 'Event',
-typeNamePlural: 'Events',
-title: { value: 'Title' },
-description: { value: 'Location' }
+  typeName: 'Event',
+  typeNamePlural: 'Events',
+  title: { value: 'Title' },
+  description: { value: 'Location' }
 }
 
 define root view entity ZR_Event_G3
-as select from zeventa
-association [0..*] to ZR_Registration_G3 as _Registrations
-on _Registrations.EventUuid = zeventa.event_uuid
+  as select from zeventa
+  
+  association [0..*] to ZR_Registration_G3 as _Registrations
+    on _Registrations.EventUuid = zeventa.event_uuid
 {
 
-/* KEY */
-key event_uuid as EventUuid,
+  /* KEY */
+  key event_uuid as EventUuid,
 
-/* LIST REPORT FIELDS */
-@UI.lineItem: [ { position: 10, importance: #HIGH } ]
-@UI.identification: [ { position: 10 } ]
-@UI.selectionField: [ { position: 10 } ]
-event_id as EventId,
+  /* LIST REPORT FIELDS */
+  @UI.lineItem: [ { position: 10, importance: #HIGH, label: 'Event-Nummer' } ]
+  @UI.identification: [ { position: 10, label: 'Event-Nummer' } ]
+  @UI.selectionField: [ { position: 10 } ]
+  event_id as EventId,
 
-@UI.lineItem: [ { position: 20, importance: #HIGH } ]
-@UI.identification: [ { position: 20 } ]
-@Search.defaultSearchElement: true
-title as Title,
+  @UI.lineItem: [ { position: 20, importance: #HIGH } ]
+  @UI.identification: [ { position: 20, label: 'Titel' } ]
+  @Search.defaultSearchElement: true
+  title as Title,
 
-@UI.lineItem: [ { position: 30, importance: #HIGH } ]
-@Search.defaultSearchElement: true
-@Search.fuzzinessThreshold: 0.7
-location as Location,
+  @UI.lineItem: [ { position: 30, importance: #HIGH } ]
+  @UI.identification: [ { position: 30, label: 'Ort' } ]
+  @Search.defaultSearchElement: true
+  @Search.fuzzinessThreshold: 0.7
+  location as Location,
 
-@UI.lineItem: [ { position: 40, importance: #HIGH } ]
-@UI.identification: [ { position: 40 } ]
-@UI.selectionField: [ { position: 20 } ]
-start_date as StartDate,
+  @UI.lineItem: [ { position: 40, importance: #HIGH } ]
+  @UI.identification: [ { position: 40, label: 'Startdatum' } ]
+  @UI.selectionField: [ { position: 20 } ]
+  start_date as StartDate,
 
-@UI.lineItem: [ { position: 50, importance: #HIGH } ]
-@UI.identification: [ { position: 50 } ]
-end_date as EndDate,
+  @UI.lineItem: [ { position: 50, importance: #HIGH } ]
+  @UI.identification: [ { position: 50, label: 'Enddatum' } ]
+  end_date as EndDate,
 
-@UI.identification: [ { position: 60 } ]
-max_participants as MaxParticipants,
+  @UI.identification: [ { position: 60, label: 'Max. Teilnehmer' } ]
+  max_participants as MaxParticipants,
 
-@UI.identification: [ { position: 70 } ]
-description as Description,
+  @UI.identification: [ { position: 70, label: 'Beschreibung' } ]
+  description as Description,
 
-/* STATUS TEXT */
-@UI.lineItem: [ { position: 55, importance: #HIGH } ]
-@UI.identification: [ { position: 55 } ]
-case
-when status = 'P' then 'Planned'
-when status = 'O' then 'Open'
-when status = 'C' then 'Closed'
-else 'Unknown'
-end as StatusText,
-status as Status,
+  /* STATUS TEXT */
+  @UI.lineItem: [ { position: 55, importance: #HIGH } ]
+  @UI.identification: [ { position: 55, label: 'Status' } ]
+  case
+    when status = 'P' then 'Planned'
+    when status = 'O' then 'Open'
+    when status = 'C' then 'Closed'
+    else 'Unknown'
+  end as StatusText,
+  status as Status,
 
-/* ADMIN FIELDS */
-@UI.hidden: true
-created_by as CreatedBy,
+  /* ADMIN FIELDS */
+  @UI.hidden: true
+  created_by as CreatedBy,
 
-@UI.hidden: true
-created_at as CreatedAt,
+  @UI.hidden: true
+  created_at as CreatedAt,
 
-@UI.hidden: true
-last_changed_by as LastChangedBy,
+  @UI.hidden: true
+  last_changed_by as LastChangedBy,
 
-@UI.hidden: true
-last_changed_at as LastChangedAt,
+  @UI.hidden: true
+  last_changed_at as LastChangedAt,
 
-/* ASSOCIATION – OBJECT PAGE TAB */
-@UI.facet: [
-{
-id: 'REGISTRATIONS',
-type: #LINEITEM_REFERENCE,
-label: 'Registrations',
-targetElement: '_Registrations'
+  /* FACETS (Tabs auf der Object Page) */
+  @UI.facet: [
+    {
+      // 1. Der General-Tab, der die @UI.identification-Felder anzeigt
+      id: 'General',
+      type: #IDENTIFICATION_REFERENCE,
+      label: 'General Information',
+      position: 10
+    },
+    {
+      // 2. Der Registrierungen-Tab
+      id: 'REGISTRATIONS',
+      type: #LINEITEM_REFERENCE,
+      label: 'Registrations',
+      targetElement: '_Registrations',
+      position: 20
+    }
+  ]
+
+  _Registrations
 }
-]
-
-_Registrations
-
-}
-

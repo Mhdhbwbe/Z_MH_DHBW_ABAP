@@ -1,513 +1,142 @@
-CLASS lhc_Event DEFINITION INHERITING FROM cl_abap_behavior_handler.
+CLASS lhc_Event DEFINITION
+  INHERITING FROM cl_abap_behavior_handler.
 
-PRIVATE SECTION.
+  PRIVATE SECTION.
 
+    METHODS setDefaultStatus
+      FOR DETERMINE ON SAVE
+      IMPORTING keys FOR Event~setDefaultStatus.
 
+    METHODS checkStartDate
+      FOR VALIDATE ON SAVE
+      IMPORTING keys FOR Event~checkStartDate.
 
-METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
+    METHODS checkEndDate
+      FOR VALIDATE ON SAVE
+      IMPORTING keys FOR Event~checkEndDate.
 
-IMPORTING keys REQUEST requested_authorizations FOR Event RESULT result.
+    METHODS openEvent
+      FOR MODIFY
+      IMPORTING keys FOR ACTION Event~openEvent.
 
-
-
-METHODS close_event FOR MODIFY
-
-IMPORTING keys FOR ACTION Event~close_event RESULT result.
-
-
-
-METHODS open_event FOR MODIFY
-
-IMPORTING keys FOR ACTION Event~open_event RESULT result.
-
-
-
-METHODS assign_event_id FOR DETERMINE ON MODIFY
-
-IMPORTING keys FOR Event~assign_event_id.
-
-
-
-METHODS set_default_status FOR DETERMINE ON MODIFY
-
-IMPORTING keys FOR Event~set_default_status.
-
-
-
-METHODS check_end_date FOR VALIDATE ON SAVE
-
-IMPORTING keys FOR Event~check_end_date.
-
-
-
-METHODS check_start_date FOR VALIDATE ON SAVE
-
-IMPORTING keys FOR Event~check_start_date.
-
-
+    METHODS closeEvent
+      FOR MODIFY
+      IMPORTING keys FOR ACTION Event~closeEvent.
 
 ENDCLASS.
 
 
-
 CLASS lhc_Event IMPLEMENTATION.
 
-
-
-METHOD get_instance_authorizations.
-
-" Für die Prüfungsaufgabe nichts nötig
-
-ENDMETHOD.
-
-
-
-"*-------------------------------------------------------------*
-
-"* Determination: assign_event_id
-
-"* - beim CREATE aufgerufen
-
-"*-------------------------------------------------------------*
-
-METHOD assign_event_id.
-
-
-
-" Max EventId aus DB
-
-SELECT MAX( event_id )
-
-FROM zeventa
-
-INTO @DATA(lv_max_id_db).
-
-
-
-DATA(lv_max_int) = 0.
-
-IF sy-subrc = 0 AND lv_max_id_db IS NOT INITIAL.
-
-lv_max_int = lv_max_id_db.
-
-ENDIF.
-
-
-
-DATA lt_update TYPE TABLE FOR UPDATE zr_event_g3\\Event.
-
-
-
-LOOP AT keys ASSIGNING FIELD-SYMBOL(<ls_key>).
-
-
-
-lv_max_int = lv_max_int + 1.
-
-
-
-DATA(lv_new_id) = |{ lv_max_int WIDTH = 5 ALIGN = RIGHT PAD = '0' }|.
-
-
-
-APPEND VALUE #(
-
-%tky = <ls_key>-%tky
-
-EventId = lv_new_id
-
-) TO lt_update.
-
-
-
-ENDLOOP.
-
-
-
-MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE
-
-ENTITY Event
-
-UPDATE
-
-FIELDS ( EventId )
-
-WITH lt_update.
-
-
-
-ENDMETHOD.
-
-
-
-
-
-
-
-"*-------------------------------------------------------------*
-
-"* Determination: set_default_status
-
-"* - beim CREATE, Status = 'P'
-
-"*-------------------------------------------------------------*
-
-METHOD set_default_status.
-
-
-
-READ ENTITIES OF zr_event_g3 IN LOCAL MODE
-
-ENTITY Event
-
-FIELDS ( status )
-
-WITH CORRESPONDING #( keys )
-
-RESULT DATA(lt_events).
-
-
-
-LOOP AT lt_events ASSIGNING FIELD-SYMBOL(<ls_event>).
-
-
-
-" Nur wenn Status noch leer ist
-
-IF <ls_event>-status IS INITIAL.
-
-
-
-MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE
-
-ENTITY Event
-
-UPDATE
-
-FIELDS ( status )
-
-WITH VALUE #( ( %tky = <ls_event>-%tky
-
-status = 'P' ) ). " Planned
-
-
-
-ENDIF.
-
-
-
-ENDLOOP.
-
-
-
-ENDMETHOD.
-
-
-
-"*-------------------------------------------------------------*
-
-"* Validation: check_start_date
-
-"* - StartDate darf nicht in der Vergangenheit liegen
-
-"* - Message 001 aus ZSMG_EVENT
-
-"*-------------------------------------------------------------*
-
-METHOD check_start_date.
-
-
-
-DATA(lv_today) = cl_abap_context_info=>get_system_date( ).
-
-
-
-LOOP AT keys ASSIGNING FIELD-SYMBOL(<ls_key>).
-
-
-
-SELECT SINGLE start_date
-
-FROM zeventa
-
-WHERE event_uuid = @<ls_key>-EventUuid
-
-INTO @DATA(lv_start_date).
-
-
-
-IF sy-subrc = 0 AND lv_start_date < lv_today.
-
-
-
-APPEND VALUE #(
-
-%tky = <ls_key>-%tky
-
-%msg = new_message(
-
-id = 'ZSMG_EVENT'
-
-number = '001'
-
-severity = if_abap_behv_message=>severity-error ) )
-
-TO reported-event.
-
-
-
-APPEND VALUE #( %tky = <ls_key>-%tky )
-
-TO failed-event.
-
-
-
-ENDIF.
-
-
-
-ENDLOOP.
-
-
-
-ENDMETHOD.
-
-
-
-
-
-
-
-"*-------------------------------------------------------------*
-
-"* Validation: check_end_date
-
-"* - EndDate darf nicht vor StartDate liegen
-
-"* - Message 002 aus ZSMG_EVENT
-
-"*-------------------------------------------------------------*
-
-METHOD check_end_date.
-
-
-
-LOOP AT keys ASSIGNING FIELD-SYMBOL(<ls_key>).
-
-
-
-SELECT SINGLE start_date, end_date
-
-FROM zeventa
-
-WHERE event_uuid = @<ls_key>-EventUuid
-
-INTO @DATA(ls_event_db).
-
-
-
-IF sy-subrc = 0
-
-AND ls_event_db-end_date IS NOT INITIAL
-
-AND ls_event_db-start_date IS NOT INITIAL
-
-AND ls_event_db-end_date < ls_event_db-start_date.
-
-
-
-APPEND VALUE #(
-
-%tky = <ls_key>-%tky
-
-%msg = new_message(
-
-id = 'ZSMG_EVENT'
-
-number = '002'
-
-severity = if_abap_behv_message=>severity-error ) )
-
-TO reported-event.
-
-
-
-APPEND VALUE #( %tky = <ls_key>-%tky )
-
-TO failed-event.
-
-
-
-ENDIF.
-
-
-
-ENDLOOP.
-
-
-
-ENDMETHOD.
-
-
-
-
-
-
-
-"*-------------------------------------------------------------*
-
-"* Action: open_event
-
-"* - setzt Status = 'O'
-
-"* - Message 004 aus ZSMG_EVENT
-
-"*-------------------------------------------------------------*
-
-METHOD open_event.
-
-
-
-READ ENTITIES OF zr_event_g3 IN LOCAL MODE
-
-ENTITY Event
-
-FIELDS ( status )
-
-WITH CORRESPONDING #( keys )
-
-RESULT DATA(lt_events).
-
-
-
-LOOP AT lt_events ASSIGNING FIELD-SYMBOL(<ls_event>).
-
-
-
-" Status auf 'O' setzen
-
-MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE
-
-ENTITY Event
-
-UPDATE
-
-FIELDS ( status )
-
-WITH VALUE #( ( %tky = <ls_event>-%tky
-
-status = 'O' ) ).
-
-
-
-" Erfolgsmeldung
-
-APPEND VALUE #(
-
-%tky = <ls_event>-%tky
-
-%msg = new_message(
-
-id = 'ZSMG_EVENT'
-
-number = '004'
-
-severity = if_abap_behv_message=>severity-success ) )
-
-TO reported-event.
-
-
-
-" Action-Result (SELF)
-
-APPEND VALUE #( %tky = <ls_event>-%tky ) TO result.
-
-
-
-ENDLOOP.
-
-
-
-ENDMETHOD.
-
-
-
-"*-------------------------------------------------------------*
-
-"* Action: close_event
-
-"* - setzt Status = 'C'
-
-"* - Message 005 aus ZSMG_EVENT
-
-"*-------------------------------------------------------------*
-
-METHOD close_event.
-
-
-
-READ ENTITIES OF zr_event_g3 IN LOCAL MODE
-
-ENTITY Event
-
-FIELDS ( status )
-
-WITH CORRESPONDING #( keys )
-
-RESULT DATA(lt_events).
-
-
-
-LOOP AT lt_events ASSIGNING FIELD-SYMBOL(<ls_event>).
-
-
-
-" Status auf 'C' setzen
-
-MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE
-
-ENTITY Event
-
-UPDATE
-
-FIELDS ( status )
-
-WITH VALUE #( ( %tky = <ls_event>-%tky
-
-status = 'C' ) ).
-
-
-
-" Erfolgsmeldung
-
-APPEND VALUE #(
-
-%tky = <ls_event>-%tky
-
-%msg = new_message(
-
-id = 'ZSMG_EVENT'
-
-number = '005'
-
-severity = if_abap_behv_message=>severity-success ) )
-
-TO reported-event.
-
-
-
-" Action-Result (SELF)
-
-APPEND VALUE #( %tky = <ls_event>-%tky ) TO result.
-
-
-
-ENDLOOP.
-
-
-
-ENDMETHOD.
-
-
+  METHOD setDefaultStatus.
+    DATA lv_max_id TYPE zeventa-event_id.
+    DATA lt_update TYPE TABLE FOR UPDATE ZR_Event_G3.
+
+    SELECT MAX( event_id )
+      FROM zeventa
+      INTO @lv_max_id.
+
+    IF lv_max_id IS INITIAL.
+      lv_max_id = '00000'.
+    ENDIF.
+
+    LOOP AT keys INTO DATA(key).
+      lv_max_id = lv_max_id + 1.
+      APPEND VALUE #(
+        EventUuid = key-EventUuid
+        EventId   = lv_max_id
+        Status    = 'P'
+      ) TO lt_update.
+    ENDLOOP.
+
+    IF lt_update IS NOT INITIAL.
+      MODIFY ENTITIES OF ZR_Event_G3 IN LOCAL MODE
+        ENTITY Event
+        UPDATE FIELDS ( EventId Status )
+        WITH lt_update.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD checkStartDate.
+    DATA lt_events TYPE TABLE FOR READ RESULT ZR_Event_G3.
+
+    READ ENTITIES OF ZR_Event_G3 IN LOCAL MODE
+      ENTITY Event
+      FIELDS ( StartDate )
+      WITH VALUE #(
+        FOR key IN keys
+          ( EventUuid = key-EventUuid )
+      )
+      RESULT lt_events.
+
+    LOOP AT lt_events INTO DATA(ls_event).
+      IF ls_event-%data-StartDate IS NOT INITIAL
+         AND ls_event-%data-StartDate < sy-datum.
+
+        INSERT VALUE #( EventUuid = ls_event-%key-EventUuid )
+          INTO TABLE failed-Event.
+
+        INSERT VALUE #(
+          EventUuid          = ls_event-%key-EventUuid
+          %msg               = new_message_with_text(
+                                 severity = if_abap_behv_message=>severity-error
+                                 text     = 'Start date must not be in the past' )
+          %element-StartDate = if_abap_behv=>mk-on
+        ) INTO TABLE reported-Event.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD checkEndDate.
+    DATA lt_events TYPE TABLE FOR READ RESULT ZR_Event_G3.
+
+    READ ENTITIES OF ZR_Event_G3 IN LOCAL MODE
+      ENTITY Event
+      FIELDS ( StartDate EndDate )
+      WITH VALUE #(
+        FOR key IN keys
+          ( EventUuid = key-EventUuid )
+      )
+      RESULT lt_events.
+
+    LOOP AT lt_events INTO DATA(ls_event).
+      IF ls_event-%data-EndDate IS NOT INITIAL
+         AND ls_event-%data-EndDate < ls_event-%data-StartDate.
+
+        INSERT VALUE #( EventUuid = ls_event-%key-EventUuid )
+          INTO TABLE failed-Event.
+
+        INSERT VALUE #(
+          EventUuid        = ls_event-%key-EventUuid
+          %msg             = new_message_with_text(
+                               severity = if_abap_behv_message=>severity-error
+                               text     = 'End date must not be before start date' )
+          %element-EndDate = if_abap_behv=>mk-on
+        ) INTO TABLE reported-Event.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD openEvent.
+    MODIFY ENTITIES OF ZR_Event_G3 IN LOCAL MODE
+      ENTITY Event
+      UPDATE FIELDS ( Status )
+      WITH VALUE #(
+        FOR key IN keys
+          ( EventUuid = key-EventUuid
+            Status    = 'O' )
+      ).
+  ENDMETHOD.
+
+  METHOD closeEvent.
+    MODIFY ENTITIES OF ZR_Event_G3 IN LOCAL MODE
+      ENTITY Event
+      UPDATE FIELDS ( Status )
+      WITH VALUE #(
+        FOR key IN keys
+          ( EventUuid = key-EventUuid
+            Status    = 'C' )
+      ).
+  ENDMETHOD.
 
 ENDCLASS.

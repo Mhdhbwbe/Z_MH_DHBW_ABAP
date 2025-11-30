@@ -1,0 +1,34 @@
+{
+  "formatVersion": "2",
+  "header": {
+    "description": "iori Elements List Report for Event",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "appType": "ui5",
+    "catalogId": "SAP_TC_UI5_REPO_UIAD",
+    "targetMappingTitle": "Event Management"
+  },
+  "ui5AppDetails": {
+    "appId": "z_ui_event"
+  },
+  "navigation": {
+    "targetMappingId": "UI5R_274A7ADF10E36ACD5AF8B3A39BA60F439CAC99F3_TM",
+    "semanticObject": "Event",
+    "action": "manage",
+    "desktop": true,
+    "tablet": true,
+    "phone": true
+  },
+  "tiles": [
+    {
+      "id": "UI5R_274A7ADF10E36ACD5AF8B3A39BA60F439CAC99F3_AL",
+      "tileType": "static",
+      "isDefault": true,
+      "standard": {
+        "title": "Event Management"
+      }
+    }
+  ]
+}
