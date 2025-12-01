@@ -1,6 +1,6 @@
 @EndUserText.label: 'Event Management Service'
 define service ZR_EVENT_SERVICE_G3 {
   expose ZR_Event_G3        as Event;
-  expose ZR_REGISTRATION_G3 as Registration;
+  expose ZR_Registration_G3 as Registration;
   expose ZR_PARTICIPANT_G3  as Participant;
 }

@@ -1,50 +1,79 @@
 managed implementation in class zbp_r_event_g3 unique;
+// WICHTIG: "strict" ist entfernt, um Autorisierungs-Dumps zu vermeiden.
 
 define behavior for ZR_Event_G3 alias Event
   persistent table ZEVENTA
   lock master
   etag master LastChangedAt
 {
+  mapping for ZEVENTA
+  {
+    EventUuid = EVENT_UUID;
+    EventId = EVENT_ID;
+    Title = TITLE;
+    Location = LOCATION;
+    StartDate = START_DATE;
+    EndDate = END_DATE;
+    MaxParticipants = MAX_PARTICIPANTS;
+    Status = STATUS;
+    Description = DESCRIPTION;
+    LastChangedAt = LAST_CHANGED_AT;
+    CreatedAt = CREATED_AT;
+  }
 
   create;
   update;
   delete;
 
-  field ( readonly ) EventUuid, EventId, Status, CreatedAt, CreatedBy, LastChangedAt, LastChangedBy;
+  field ( numbering : managed, readonly ) EventUuid;
+  field ( readonly ) EventId, Status, CreatedAt, LastChangedAt;
   field ( mandatory : create ) Title, Location, StartDate, EndDate, MaxParticipants, Description;
 
-  determination setDefaultStatus on save {
-    create;
-  }
+  determination setDefaultStatus on save { create; }
 
-  validation checkStartDate on save {
-    create;
-    field StartDate;
-  }
-
-  validation checkEndDate on save {
-    create;
-    field EndDate;
-  }
+  validation checkStartDate on save { create; update; }
+  validation checkEndDate on save { create; update; }
 
   action openEvent;
   action closeEvent;
 
-  mapping for ZEVENTA
+  // 🔥 HIER liegt die Erlaubnis zum Erstellen:
+  association _Registrations { create; }
+}
+
+define behavior for ZR_Registration_G3 alias Registration
+  persistent table ZREGISTRATIONA
+  lock dependent by _Event
+  etag master LastChangedAt
+{
+  mapping for ZREGISTRATIONA
   {
-    EventUuid       = EVENT_UUID;
-    EventId         = EVENT_ID;
-    Title           = TITLE;
-    Location        = LOCATION;
-    StartDate       = START_DATE;
-    EndDate         = END_DATE;
-    MaxParticipants = MAX_PARTICIPANTS;
-    Status          = STATUS;
-    Description     = DESCRIPTION;
-    CreatedBy       = CREATED_BY;
-    CreatedAt       = CREATED_AT;
-    LastChangedBy   = LAST_CHANGED_BY;
-    LastChangedAt   = LAST_CHANGED_AT;
+    RegistrationUuid = REGISTRATION_UUID;
+    RegistrationId = REGISTRATION_ID;
+    EventUuid = EVENT_UUID;
+    ParticipantUuid = PARTICIPANT_UUID;
+    Status = STATUS;
+    Remarks = REMARKS;
+    LastChangedAt = LAST_CHANGED_AT;
+    CreatedAt = CREATED_AT;
   }
 
+  // 🔥 KORREKTUR: "create;" wurde HIER ENTFERNT, um den Syntaxfehler zu beheben.
+  update;
+  delete;
+
+  field ( numbering : managed, readonly ) RegistrationUuid;
+  field ( readonly ) RegistrationId, EventUuid, Status, CreatedAt, LastChangedAt;
+  field ( mandatory : create ) ParticipantUuid;
+
+  association _Event;
+
+  determination assignRegistrationId on save { create; }
+  determination setDefaultRegStatus on save { create; }
+
+  validation checkMaxParticipants on save { create; }
+  validation checkStatusOnAction on save { create; update; }
+
+  action approveRegistration;
+  action rejectRegistration;
 }

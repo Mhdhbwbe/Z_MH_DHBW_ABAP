@@ -1,83 +1,76 @@
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @EndUserText.label: 'ZR_Registration_G3'
-@Metadata.ignorePropagatedAnnotations: true
-@Search.searchable: true
 
-define root view entity ZR_Registration_G3
+@UI.headerInfo: {
+  typeName: 'Registration',
+  typeNamePlural: 'Registrations',
+  title: { value: 'RegistrationId' },
+  description: { value: 'Status' }
+}
+
+define view entity ZR_Registration_G3
   as select from zregistrationa
-
-    /* Association to Event */
-    association [1..1] to ZR_Event_G3 as _Event
-      on _Event.EventUuid = zregistrationa.event_uuid
-
-    /* Association to Participant (for VH + UI) */
-    association [1..1] to ZR_PARTICIPANT_G3 as _Participant
-      on _Participant.ParticipantUuid = zregistrationa.participant_uuid
-
+  
+  association to parent ZR_Event_G3       as _Event
+    on $projection.EventUuid = _Event.EventUuid
+    
+  association [1..1] to ZR_PARTICIPANT_G3 as _Participant
+    on $projection.ParticipantUuid = _Participant.ParticipantUuid
 {
-    /* Keys */
-    key registration_uuid as RegistrationUuid,
+  key registration_uuid as RegistrationUuid,
 
-    /* Basic Fields */
-    @UI.lineItem: [ { position: 10 } ]
-    @Search.defaultSearchElement: true
-    registration_id as RegistrationId,
+  event_uuid as EventUuid,
 
-    @UI.selectionField: [ { position: 10 } ]
-    @UI.lineItem:       [ { position: 20 } ]
-    status as Status,
+  @UI.lineItem:       [ { position: 10, importance: #HIGH, label: 'Reg. ID' } ]
+  @UI.identification: [ { position: 10, label: 'Registration ID' } ]
+  registration_id as RegistrationId,
 
-    @UI.lineItem: [ { position: 30 } ]
-    remarks as Remarks,
+  @Consumption.valueHelpDefinition: [{
+    entity: { name: 'ZR_Participant_G3', element: 'ParticipantUuid' }
+  }]
+  @ObjectModel.text.association: '_Participant'
+  @UI.lineItem:       [ { position: 20, importance: #HIGH, label: 'Teilnehmer' } ]
+  @UI.identification: [ { position: 20, label: 'Teilnehmer' } ]
+  participant_uuid as ParticipantUuid,
 
-    /* ============================== */
-    /* Event Information              */
-    /* ============================== */
-    @UI.lineItem: [ { position: 40, importance: #HIGH } ]
-    _Event.Title,
+  /* STATUS & BUTTONS */
+  @UI.selectionField: [ { position: 10 } ]
+  @UI.lineItem:       [ 
+    { position: 30, importance: #HIGH, label: 'Status' },
+    { type: #FOR_ACTION, dataAction: 'approveRegistration', label: 'Approve' },
+    { type: #FOR_ACTION, dataAction: 'rejectRegistration', label: 'Reject' }
+  ]
+  @UI.identification: [ 
+    { position: 30, label: 'Status' },
+    { type: #FOR_ACTION, dataAction: 'approveRegistration', label: 'Approve' },
+    { type: #FOR_ACTION, dataAction: 'rejectRegistration', label: 'Reject' }
+  ]
+  status as Status,
 
-    /* ============================== */
-    /* Participant Information        */
-    /* ============================== */
-    @UI.lineItem: [ { position: 50 } ]
-    _Participant.FirstName,
+  @UI.lineItem:       [ { position: 40, importance: #MEDIUM, label: 'Bemerkung' } ]
+  @UI.identification: [ { position: 40, label: 'Bemerkung' } ]
+  remarks as Remarks,
 
-    @UI.lineItem: [ { position: 60 } ]
-    _Participant.LastName,
+  /* ADMIN FIELDS */
+  @Semantics.user.createdBy: true
+  created_by      as CreatedBy,
+  @Semantics.systemDateTime.createdAt: true
+  created_at      as CreatedAt,
+  @Semantics.user.lastChangedBy: true
+  last_changed_by as LastChangedBy,
+  @Semantics.systemDateTime.lastChangedAt: true
+  last_changed_at as LastChangedAt,
 
-    /* ============================== */
-    /*  PARTICIPANT VALUE HELP        */
-    /* ============================== */
-    @EndUserText.label: 'Participant (UUID)'
-    @Consumption.valueHelpDefinition: [
-      {
-        entity: {
-          name: 'ZR_PARTICIPANT_G3',
-          element: 'ParticipantUuid'
-        }
-      }
-    ]
-    participant_uuid as ParticipantUuid,
-
-    /* Event FK */
-    event_uuid as EventUuid,
-
-    /* ============================== */
-    /* Admin / Technical Fields       */
-    /* ============================== */
-    @UI.hidden: true
-    created_by as CreatedBy,
-
-    @UI.hidden: true
-    created_at as CreatedAt,
-
-    @UI.hidden: true
-    last_changed_by as LastChangedBy,
-
-    @UI.hidden: true
-    last_changed_at as LastChangedAt,
-
-    /* Associations must be exposed */
-    _Event,
-    _Participant
+  /* FACET */
+  @UI.facet: [
+    {
+      id: 'General',
+      type: #IDENTIFICATION_REFERENCE,
+      label: 'Registration Details',
+      position: 10
+    }
+  ]
+  
+  _Participant,
+  _Event
 }
