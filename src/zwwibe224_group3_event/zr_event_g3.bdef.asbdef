@@ -1,5 +1,4 @@
 managed implementation in class zbp_r_event_g3 unique;
-// WICHTIG: "strict" ist entfernt, um Autorisierungs-Dumps zu vermeiden.
 
 define behavior for ZR_Event_G3 alias Event
   persistent table ZEVENTA
@@ -29,7 +28,9 @@ define behavior for ZR_Event_G3 alias Event
   field ( readonly ) EventId, Status, CreatedAt, LastChangedAt;
   field ( mandatory : create ) Title, Location, StartDate, EndDate, MaxParticipants, Description;
 
-  determination setDefaultStatus on save { create; }
+  // 🔥 KORREKTUR: "on modify" statt "on save" -> Das passiert SOFORT!
+  determination assign_event_id on modify { create; }
+  determination setDefaultStatus on modify { create; }
 
   validation checkStartDate on save { create; update; }
   validation checkEndDate on save { create; update; }
@@ -37,7 +38,6 @@ define behavior for ZR_Event_G3 alias Event
   action openEvent;
   action closeEvent;
 
-  // 🔥 HIER liegt die Erlaubnis zum Erstellen:
   association _Registrations { create; }
 }
 
@@ -58,7 +58,6 @@ define behavior for ZR_Registration_G3 alias Registration
     CreatedAt = CREATED_AT;
   }
 
-  // 🔥 KORREKTUR: "create;" wurde HIER ENTFERNT, um den Syntaxfehler zu beheben.
   update;
   delete;
 
@@ -68,11 +67,11 @@ define behavior for ZR_Registration_G3 alias Registration
 
   association _Event;
 
-  determination assignRegistrationId on save { create; }
-  determination setDefaultRegStatus on save { create; }
+  // 🔥 KORREKTUR: Auch hier "on modify"
+  determination assignRegistrationId on modify { create; }
+  determination setDefaultRegStatus on modify { create; }
 
   validation checkMaxParticipants on save { create; }
-  validation checkStatusOnAction on save { create; update; }
 
   action approveRegistration;
   action rejectRegistration;

@@ -1,35 +1,39 @@
 CLASS lhc_event DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
 
-    " --- EVENT METHODEN ---
-    METHODS setDefaultStatus FOR DETERMINE ON SAVE
+    " --- EVENT: DETERMINATIONS (ON MODIFY) ---
+    METHODS assign_event_id FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR Event~assign_event_id.
+
+    METHODS setDefaultStatus FOR DETERMINE ON MODIFY
       IMPORTING keys FOR Event~setDefaultStatus.
 
+    " --- EVENT: VALIDATIONS (ON SAVE) ---
     METHODS checkStartDate FOR VALIDATE ON SAVE
       IMPORTING keys FOR Event~checkStartDate.
 
     METHODS checkEndDate FOR VALIDATE ON SAVE
       IMPORTING keys FOR Event~checkEndDate.
 
+    " --- EVENT: ACTIONS ---
     METHODS openEvent FOR MODIFY
       IMPORTING keys FOR ACTION Event~openEvent.
 
     METHODS closeEvent FOR MODIFY
       IMPORTING keys FOR ACTION Event~closeEvent.
 
-    " --- REGISTRATION METHODEN ---
-    METHODS assignRegistrationId FOR DETERMINE ON SAVE
+    " --- REGISTRATION: DETERMINATIONS (ON MODIFY) ---
+    METHODS assignRegistrationId FOR DETERMINE ON MODIFY
       IMPORTING keys FOR Registration~assignRegistrationId.
 
-    METHODS setDefaultRegStatus FOR DETERMINE ON SAVE
+    METHODS setDefaultRegStatus FOR DETERMINE ON MODIFY
       IMPORTING keys FOR Registration~setDefaultRegStatus.
 
+    " --- REGISTRATION: VALIDATIONS (ON SAVE) ---
     METHODS checkMaxParticipants FOR VALIDATE ON SAVE
       IMPORTING keys FOR Registration~checkMaxParticipants.
 
-    METHODS checkStatusOnAction FOR VALIDATE ON SAVE
-      IMPORTING keys FOR Registration~checkStatusOnAction.
-
+    " --- REGISTRATION: ACTIONS ---
     METHODS approveRegistration FOR MODIFY
       IMPORTING keys FOR ACTION Registration~approveRegistration.
 
@@ -40,32 +44,63 @@ ENDCLASS.
 
 CLASS lhc_event IMPLEMENTATION.
 
-  " ============================================================================
-  " EVENT LOGIK
-  " ============================================================================
+  METHOD assign_event_id.
+    " Automatische Nummervergabe für Event
+    READ ENTITIES OF zr_event_g3 IN LOCAL MODE
+      ENTITY Event
+      FIELDS ( EventId ) WITH CORRESPONDING #( keys )
+      RESULT DATA(events).
+
+    DATA: lv_max_id TYPE zeventa-event_id.
+    SELECT SINGLE MAX( event_id ) FROM zeventa INTO @lv_max_id.
+
+    DATA(lv_max_int) = 0.
+    IF lv_max_id IS NOT INITIAL.
+      lv_max_int = lv_max_id.
+    ENDIF.
+
+    LOOP AT events INTO DATA(event).
+      IF event-EventId IS INITIAL.
+        lv_max_int = lv_max_int + 1.
+        lv_max_id = lv_max_int. " Automatische Konvertierung nach NUMC
+
+        MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE
+          ENTITY Event
+          UPDATE FROM VALUE #( (
+            EventUuid = event-EventUuid
+            EventId = lv_max_id
+            %control-EventId = 01
+          ) ).
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
   METHOD setDefaultStatus.
-    READ ENTITIES OF zr_event_g3 IN LOCAL MODE ENTITY Event
+    READ ENTITIES OF zr_event_g3 IN LOCAL MODE
+      ENTITY Event
       FIELDS ( Status ) WITH CORRESPONDING #( keys )
       RESULT DATA(events).
 
-    LOOP AT events REFERENCE INTO DATA(event).
-      IF event->Status IS INITIAL.
-        MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE ENTITY Event
-          UPDATE FIELDS ( Status ) WITH VALUE #( ( %tky = event->%tky Status = 'P' ) ).
+    LOOP AT events INTO DATA(event).
+      IF event-Status IS INITIAL.
+        MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE
+          ENTITY Event
+          UPDATE FROM VALUE #( (
+            EventUuid = event-EventUuid
+            Status = 'P'
+            %control-Status = 01
+          ) ).
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
 
   METHOD checkStartDate.
-    DATA: lv_today TYPE d.
-    lv_today = sy-datum.
-
     READ ENTITIES OF zr_event_g3 IN LOCAL MODE ENTITY Event
       FIELDS ( StartDate ) WITH CORRESPONDING #( keys )
       RESULT DATA(events).
 
     LOOP AT events INTO DATA(event).
-      IF event-StartDate < lv_today.
+      IF event-StartDate < cl_abap_context_info=>get_system_date( ).
         APPEND VALUE #( %tky = event-%tky ) TO failed-event.
         APPEND VALUE #( %tky = event-%tky
                         %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'Startdatum muss in der Zukunft liegen.' )
@@ -99,22 +134,30 @@ CLASS lhc_event IMPLEMENTATION.
       UPDATE FIELDS ( Status ) WITH VALUE #( FOR key IN keys ( %tky = key-%tky Status = 'C' ) ).
   ENDMETHOD.
 
-  " ============================================================================
-  " REGISTRATION LOGIK
-  " ============================================================================
   METHOD assignRegistrationId.
-    DATA: lv_maxid TYPE zregistrationa-registration_id.
-    SELECT SINGLE MAX( registration_id ) FROM zregistrationa INTO @lv_maxid.
-
     READ ENTITIES OF zr_event_g3 IN LOCAL MODE ENTITY Registration
       FIELDS ( RegistrationId ) WITH CORRESPONDING #( keys )
       RESULT DATA(regs).
 
-    LOOP AT regs REFERENCE INTO DATA(reg).
-      IF reg->RegistrationId IS INITIAL.
-        lv_maxid = lv_maxid + 1.
+    DATA: lv_maxid TYPE zregistrationa-registration_id.
+    SELECT SINGLE MAX( registration_id ) FROM zregistrationa INTO @lv_maxid.
+
+    DATA(lv_max_int_reg) = 0.
+    IF lv_maxid IS NOT INITIAL.
+      lv_max_int_reg = lv_maxid.
+    ENDIF.
+
+    LOOP AT regs INTO DATA(reg).
+      IF reg-RegistrationId IS INITIAL.
+        lv_max_int_reg = lv_max_int_reg + 1.
+        lv_maxid = lv_max_int_reg.
+
         MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE ENTITY Registration
-          UPDATE FIELDS ( RegistrationId ) WITH VALUE #( ( %tky = reg->%tky RegistrationId = lv_maxid ) ).
+          UPDATE FROM VALUE #( (
+            RegistrationUuid = reg-RegistrationUuid
+            RegistrationId = lv_maxid
+            %control-RegistrationId = 01
+          ) ).
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
@@ -124,10 +167,14 @@ CLASS lhc_event IMPLEMENTATION.
       FIELDS ( Status ) WITH CORRESPONDING #( keys )
       RESULT DATA(regs).
 
-    LOOP AT regs REFERENCE INTO DATA(reg).
-      IF reg->Status IS INITIAL.
+    LOOP AT regs INTO DATA(reg).
+      IF reg-Status IS INITIAL.
         MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE ENTITY Registration
-          UPDATE FIELDS ( Status ) WITH VALUE #( ( %tky = reg->%tky Status = 'New' ) ).
+          UPDATE FROM VALUE #( (
+            RegistrationUuid = reg-RegistrationUuid
+            Status = 'New'
+            %control-Status = 01
+          ) ).
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
@@ -141,17 +188,13 @@ CLASS lhc_event IMPLEMENTATION.
       SELECT SINGLE max_participants FROM zeventa WHERE event_uuid = @reg-EventUuid INTO @DATA(lv_max).
       SELECT COUNT( * ) FROM zregistrationa WHERE event_uuid = @reg-EventUuid AND status <> 'Rejected' INTO @DATA(lv_current).
 
-      IF lv_current > lv_max.
+      IF lv_current >= lv_max.
          APPEND VALUE #( %tky = reg-%tky ) TO failed-registration.
          APPEND VALUE #( %tky = reg-%tky
                          %msg = new_message_with_text( severity = if_abap_behv_message=>severity-error text = 'Maximale Teilnehmerzahl überschritten.' )
                        ) TO reported-registration.
       ENDIF.
     ENDLOOP.
-  ENDMETHOD.
-
-  METHOD checkStatusOnAction.
-    " Leer, da Prüfung in Action erfolgt
   ENDMETHOD.
 
   METHOD approveRegistration.
@@ -169,6 +212,7 @@ CLASS lhc_event IMPLEMENTATION.
          MODIFY ENTITIES OF zr_event_g3 IN LOCAL MODE ENTITY Registration
            UPDATE FIELDS ( Status ) WITH VALUE #( ( %tky = reg-%tky Status = 'Approved' ) ).
 
+         " Optional: Erfolgsmeldung in reported schreiben
          APPEND VALUE #( %tky = reg-%tky
                          %msg = new_message_with_text( severity = if_abap_behv_message=>severity-success text = 'Genehmigt.' )
                        ) TO reported-registration.
